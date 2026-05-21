@@ -1,87 +1,87 @@
 # RAG Obsidian — Ollama + LlamaIndex + ChromaDB
 
-Sistema RAG completamente local que usa tu vault de Obsidian como fuente de conocimiento. Sin API keys, sin datos en la nube.
+A fully local RAG system that uses your Obsidian vault as a knowledge source. No API keys, no data in the cloud.
 
 ## Stack
 
-| Rol | Tecnología |
+| Role | Technology |
 |---|---|
-| LLM (generación) | [Ollama](https://ollama.com) — `llama3.2:1b` |
+| LLM (generation) | [Ollama](https://ollama.com) — `llama3.2:1b` |
 | Embeddings | Ollama — `nomic-embed-text` |
-| Framework RAG | [LlamaIndex](https://www.llamaindex.ai) |
+| RAG framework | [LlamaIndex](https://www.llamaindex.ai) |
 | Vector store | [ChromaDB](https://www.trychroma.com) (local) |
-| Fuente de datos | Vault de Obsidian (archivos `.md`) |
+| Data source | Obsidian vault (`.md` files) |
 
-## Requisitos
+## Requirements
 
 - Python 3.11+
-- [Ollama](https://ollama.com/download) instalado y corriendo
+- [Ollama](https://ollama.com/download) installed and running
 
-## Instalación
+## Installation
 
 ```bash
-# 1. Instalar dependencias
+# 1. Install dependencies
 pip install -r requirements.txt
 
-# 2. Bajar los modelos
+# 2. Pull the models
 ollama pull llama3.2:1b
 ollama pull nomic-embed-text
 
-# 3. Configurar
+# 3. Configure
 cp .env.example .env
 ```
 
-Editá `.env` y poné la ruta de tu vault:
+Edit `.env` and set your vault path:
 
 ```ini
-OBSIDIAN_VAULT_PATH=C:\Users\tu-usuario\Documents\mi-vault
+OBSIDIAN_VAULT_PATH=C:\Users\your-user\Documents\my-vault
 ```
 
-Para encontrar la ruta en Obsidian: **Settings → About → Vault path**.
+To find the path in Obsidian: **Settings → About → Vault path**.
 
-## Uso
+## Usage
 
 ```bash
-# Indexar el vault (primera vez o después de cambiar notas)
+# Index the vault (first time or after changing notes)
 python ingest.py
 
-# Consultar
-python query.py "¿Qué notas tengo sobre machine learning?"
+# Query
+python query.py "What notes do I have about machine learning?"
 ```
 
-La primera indexación puede tardar varios minutos según el tamaño del vault. Las siguientes son incrementales: solo se re-indexan notas nuevas o modificadas.
+The first indexing run may take several minutes depending on vault size. Subsequent runs are incremental: only new or modified notes are re-indexed.
 
-## Cómo funciona
+## How it works
 
-**Ingesta (`ingest.py`)**
+**Ingest (`ingest.py`)**
 
-1. Lee todos los `.md` del vault recursivamente
-2. Limpia el texto: extrae frontmatter YAML como metadata, convierte `[[wikilinks]]` a texto plano, normaliza `#tags`
-3. Divide cada nota en chunks con `MarkdownNodeParser` (por headings) + `SentenceSplitter` (512 tokens, overlap 64)
-4. Genera embeddings con `nomic-embed-text` vía Ollama
-5. Persiste en ChromaDB con soporte incremental: archivos sin cambios se saltean, archivos borrados se eliminan del índice
+1. Reads all `.md` files from the vault recursively
+2. Cleans the text: extracts YAML frontmatter as metadata, converts `[[wikilinks]]` to plain text, normalizes `#tags`
+3. Splits each note into chunks using `MarkdownNodeParser` (by headings) + `SentenceSplitter` (512 tokens, overlap 64)
+4. Generates embeddings with `nomic-embed-text` via Ollama
+5. Persists to ChromaDB with incremental support: unchanged files are skipped, deleted files are removed from the index
 
-**Consulta (`query.py`)**
+**Query (`query.py`)**
 
-1. Convierte la pregunta en un embedding y busca los chunks más similares en ChromaDB
-2. Sintetiza una respuesta con `llama3.2` usando los chunks como contexto
-3. Muestra la respuesta y una tabla con las notas fuente, su score de similitud y tags
+1. Converts the question into an embedding and retrieves the most similar chunks from ChromaDB
+2. Synthesizes an answer with `llama3.2:1b` using the chunks as context
+3. Displays the answer and a table of source notes with similarity score and tags
 
-## Configuración
+## Configuration
 
-Todas las opciones se configuran en `.env`:
+All options are configured in `.env`:
 
-| Variable | Default | Descripción |
+| Variable | Default | Description |
 |---|---|---|
-| `OBSIDIAN_VAULT_PATH` | — | Ruta al vault (requerida) |
-| `OLLAMA_LLM_MODEL` | `llama3.2:1b` | Modelo de generación |
-| `OLLAMA_EMBED_MODEL` | `nomic-embed-text` | Modelo de embeddings |
-| `OLLAMA_BASE_URL` | `http://localhost:11434` | URL de Ollama |
-| `CHUNK_SIZE` | `512` | Tamaño de chunks en tokens |
-| `CHUNK_OVERLAP` | `64` | Overlap entre chunks |
-| `TOP_K` | `5` | Notas fuente a recuperar por consulta |
+| `OBSIDIAN_VAULT_PATH` | — | Path to the vault (required) |
+| `OLLAMA_LLM_MODEL` | `llama3.2:1b` | Generation model |
+| `OLLAMA_EMBED_MODEL` | `nomic-embed-text` | Embeddings model |
+| `OLLAMA_BASE_URL` | `http://localhost:11434` | Ollama URL |
+| `CHUNK_SIZE` | `512` | Chunk size in tokens |
+| `CHUNK_OVERLAP` | `64` | Overlap between chunks |
+| `TOP_K` | `5` | Source notes retrieved per query |
 
-## Re-indexar desde cero
+## Re-index from scratch
 
 ```bash
 rm -rf storage/

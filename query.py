@@ -10,13 +10,13 @@ console = Console()
 
 
 def display_response(response) -> None:
-    console.print(Panel(str(response), title="Respuesta", border_style="green", padding=(1, 2)))
+    console.print(Panel(str(response), title="Answer", border_style="green", padding=(1, 2)))
 
     if not response.source_nodes:
         return
 
-    table = Table(title="Notas fuente", show_lines=True, header_style="bold magenta")
-    table.add_column("Nota", style="cyan", no_wrap=True)
+    table = Table(title="Source notes", show_lines=True, header_style="bold magenta")
+    table.add_column("Note", style="cyan", no_wrap=True)
     table.add_column("Score", justify="right", style="yellow")
     table.add_column("Tags", style="dim")
 
@@ -24,7 +24,7 @@ def display_response(response) -> None:
         meta = node.node.metadata
         score = f"{node.score:.3f}" if node.score is not None else "n/a"
         table.add_row(
-            meta.get("note_title") or meta.get("file_name", "desconocido"),
+            meta.get("note_title") or meta.get("file_name", "unknown"),
             score,
             meta.get("tags", ""),
         )
@@ -34,7 +34,7 @@ def display_response(response) -> None:
 
 def main():
     if len(sys.argv) < 2:
-        console.print("[bold red]Uso:[/bold red] python query.py \"tu pregunta\"")
+        console.print("[bold red]Usage:[/bold red] python query.py \"your question\"")
         sys.exit(1)
 
     question = " ".join(sys.argv[1:])
@@ -46,7 +46,7 @@ def main():
         sys.exit(1)
 
     if not config.CHROMA_DB_PATH.exists():
-        console.print("[bold red]Error:[/bold red] No hay índice. Ejecutá primero: python ingest.py")
+        console.print("[bold red]Error:[/bold red] No index found. Run first: python ingest.py")
         sys.exit(1)
 
     from llama_index.core import Settings, VectorStoreIndex
@@ -55,7 +55,7 @@ def main():
     Settings.llm = config.get_llm()
     Settings.embed_model = config.get_embed_model()
 
-    console.print(f"[bold cyan]Pregunta:[/bold cyan] {question}\n")
+    console.print(f"[bold cyan]Question:[/bold cyan] {question}\n")
 
     vector_store = config.get_chroma_vector_store()
     index = VectorStoreIndex.from_vector_store(vector_store)
@@ -64,7 +64,7 @@ def main():
         response_mode=ResponseMode.COMPACT,
     )
 
-    with console.status("Consultando..."):
+    with console.status("Querying..."):
         response = query_engine.query(question)
 
     display_response(response)

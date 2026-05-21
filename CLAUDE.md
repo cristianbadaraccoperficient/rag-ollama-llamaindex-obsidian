@@ -11,7 +11,7 @@ cp .env.example .env   # then set OBSIDIAN_VAULT_PATH
 
 Ollama must be running with both models pulled:
 ```bash
-ollama pull llama3.2
+ollama pull llama3.2:1b
 ollama pull nomic-embed-text
 ```
 
@@ -22,7 +22,7 @@ ollama pull nomic-embed-text
 python ingest.py
 
 # Query the index
-python query.py "tu pregunta"
+python query.py "your question"
 
 # Re-index from scratch (delete state and re-run)
 rm -rf storage/
@@ -66,7 +66,7 @@ storage/
 | Variable | Default | Notes |
 |---|---|---|
 | `OBSIDIAN_VAULT_PATH` | — | Required, no default |
-| `OLLAMA_LLM_MODEL` | `llama3.2` | Generation model |
+| `OLLAMA_LLM_MODEL` | `llama3.2:1b` | Generation model |
 | `OLLAMA_EMBED_MODEL` | `nomic-embed-text` | Must be pulled separately |
 | `CHUNK_SIZE` / `CHUNK_OVERLAP` | `512` / `64` | Affects retrieval precision |
 | `TOP_K` | `5` | Number of source nodes returned |

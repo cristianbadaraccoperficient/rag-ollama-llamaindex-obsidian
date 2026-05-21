@@ -10,7 +10,7 @@ console = Console()
 
 
 def main():
-    console.print("[bold cyan]RAG Obsidian — Ingesta[/bold cyan]")
+    console.print("[bold cyan]RAG Obsidian — Ingest[/bold cyan]")
 
     try:
         config.validate()
@@ -30,25 +30,25 @@ def main():
     Settings.chunk_overlap = config.CHUNK_OVERLAP
 
     console.print(f"Vault: [green]{config.OBSIDIAN_VAULT_PATH}[/green]")
-    console.print(f"Modelo LLM: [yellow]{config.OLLAMA_LLM_MODEL}[/yellow]  |  Embeddings: [yellow]{config.OLLAMA_EMBED_MODEL}[/yellow]")
+    console.print(f"LLM model: [yellow]{config.OLLAMA_LLM_MODEL}[/yellow]  |  Embeddings: [yellow]{config.OLLAMA_EMBED_MODEL}[/yellow]")
 
     # Load docstore (incremental indexing state)
     if config.DOCSTORE_PATH.exists():
         docstore = SimpleDocumentStore.from_persist_path(str(config.DOCSTORE_PATH))
-        console.print(f"Docstore cargado: {len(docstore.docs)} documentos previos")
+        console.print(f"Docstore loaded: {len(docstore.docs)} previous documents")
     else:
         docstore = SimpleDocumentStore()
-        console.print("Docstore nuevo")
+        console.print("New docstore")
 
     # Load ingestion cache
     if config.CACHE_PATH.exists():
         ingest_cache = IngestionCache.from_persist_path(str(config.CACHE_PATH))
-        console.print("Cache de ingesta cargado")
+        console.print("Ingestion cache loaded")
     else:
         ingest_cache = IngestionCache()
 
     # Read vault
-    console.print("\nLeyendo archivos .md del vault...")
+    console.print("\nReading .md files from vault...")
     reader = SimpleDirectoryReader(
         input_dir=str(config.OBSIDIAN_VAULT_PATH),
         recursive=True,
@@ -57,7 +57,7 @@ def main():
         file_metadata=obsidian_file_metadata,
     )
     documents = reader.load_data(show_progress=True)
-    console.print(f"[green]{len(documents)}[/green] notas encontradas")
+    console.print(f"[green]{len(documents)}[/green] notes found")
 
     # Apply Obsidian text transforms (Document.text is read-only in Pydantic v2)
     documents = [
@@ -83,14 +83,14 @@ def main():
         docstore_strategy=DocstoreStrategy.UPSERTS_AND_DELETE,
     )
 
-    console.print("\nIndexando... (esto puede tardar varios minutos en la primera ejecución)")
+    console.print("\nIndexing... (first run may take several minutes)")
     nodes = pipeline.run(documents=documents, show_progress=True)
 
     docstore.persist(persist_path=str(config.DOCSTORE_PATH))
     ingest_cache.persist(persist_path=str(config.CACHE_PATH))
 
-    console.print(f"\n[bold green]Listo.[/bold green] {len(nodes)} nodos indexados en ChromaDB.")
-    console.print(f"Índice guardado en: [dim]{config.CHROMA_DB_PATH}[/dim]")
+    console.print(f"\n[bold green]Done.[/bold green] {len(nodes)} nodes indexed in ChromaDB.")
+    console.print(f"Index stored at: [dim]{config.CHROMA_DB_PATH}[/dim]")
 
 
 if __name__ == "__main__":
