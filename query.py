@@ -32,6 +32,20 @@ def display_response(response) -> None:
     console.print(table)
 
 
+def build_query_engine():
+    from llama_index.core import Settings, VectorStoreIndex
+    from llama_index.core.response_synthesizers import ResponseMode
+
+    Settings.llm = config.get_llm()
+    Settings.embed_model = config.get_embed_model()
+    vector_store = config.get_chroma_vector_store(readonly=True)
+    index = VectorStoreIndex.from_vector_store(vector_store)
+    return index.as_query_engine(
+        similarity_top_k=config.TOP_K,
+        response_mode=ResponseMode.SIMPLE_SUMMARIZE,
+    )
+
+
 def main():
     if len(sys.argv) < 2:
         console.print("[bold red]Usage:[/bold red] python query.py \"your question\"")
@@ -49,23 +63,10 @@ def main():
         console.print("[bold red]Error:[/bold red] No index found. Run first: python ingest.py")
         sys.exit(1)
 
-    from llama_index.core import Settings, VectorStoreIndex
-    from llama_index.core.response_synthesizers import ResponseMode
-
-    Settings.llm = config.get_llm()
-    Settings.embed_model = config.get_embed_model()
-
     console.print(f"[bold cyan]Question:[/bold cyan] {question}\n")
 
-    vector_store = config.get_chroma_vector_store()
-    index = VectorStoreIndex.from_vector_store(vector_store)
-    query_engine = index.as_query_engine(
-        similarity_top_k=config.TOP_K,
-        response_mode=ResponseMode.COMPACT,
-    )
-
     with console.status("Querying..."):
-        response = query_engine.query(question)
+        response = build_query_engine().query(question)
 
     display_response(response)
 

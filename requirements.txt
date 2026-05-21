@@ -6,3 +6,5 @@ chromadb
 python-dotenv
 rich
 pyyaml
+fastapi
+uvicorn[standard]
